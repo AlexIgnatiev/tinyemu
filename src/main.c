@@ -1,8 +1,10 @@
+#define _XOPEN_SOURCE 700 //for getting timestamps
 #include <env.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 
 #include <unistd.h>
 
@@ -10,6 +12,9 @@
 #define TXS_NUM 8
 #define READ_SET_PORTION TXS_NUM
 
+#define pclock(_ts) printf("%ld.%04ld\n", _ts.tv_sec, _ts.tv_nsec / 1000000)
+
+struct timespec ts_diff(struct timespec *start, struct timespec *end);
 void *tx_validate(void* _arg);
 void *tx_validate_host_only(void *_arg);
 
@@ -22,6 +27,7 @@ typedef struct {
     int tid;
 } tx_args_t;
 
+struct timespec exec_time;
 
 int main(int argc, char *argv[]) {
     if(argc < 2) {
@@ -32,6 +38,7 @@ int main(int argc, char *argv[]) {
     int ret = 0;
     int host_only = atoi(argv[1]);
 
+    struct timespec start, end;
     env_t env;
     env_program_t program;
     size_t cache_size;
@@ -54,9 +61,10 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < glocks->size / sizeof(int); i++) {
             mapped_glocks[i] = 0;
         }
-        mapped_glocks[(read_set_sz * 4) / sizeof(int)] = 999999999;
+        mapped_glocks[(read_set_sz * 1) / sizeof(int)] = 999999999;
         unmap_shbuf(glocks);
 
+        clock_gettime(CLOCK_MONOTONIC, &start);
         tx_args_t tx_args[TXS_NUM];
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].glocks = glocks;
@@ -69,6 +77,8 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < thread_num; i++) {
             pthread_join(threads[i], NULL);
         }
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        exec_time = ts_diff(&start, &end);
         destroy_shared_buffer(glocks);
         env_program_destroy(&program);
     } else {
@@ -76,6 +86,7 @@ int main(int argc, char *argv[]) {
         memset(glocks, 0, global_lock_tbl_size);
         glocks[(read_set_sz * 4) / sizeof(int)] = 999999999;
         
+        clock_gettime(CLOCK_MONOTONIC, &start);
         tx_args_t tx_args[TXS_NUM];
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].ho_glocks = glocks;
@@ -88,11 +99,12 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < thread_num; i++) {
             pthread_join(threads[i], NULL);
         }
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        exec_time = ts_diff(&start, &end);
     }
 
-
     env_destroy(&env);
-
+    pclock(exec_time);
     return ret;
 }
 
@@ -144,7 +156,7 @@ void *tx_validate(void* _args) {
 
     env_flush_queue(args->program->env, q_id);
 
-    printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
+    //printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
 
     return NULL;
 }
@@ -167,7 +179,19 @@ void *tx_validate_host_only(void* _args) {
     }
 
     free(read_set);
-    printf("thread id=%d - abort=%d\n", args->tid, abort);
+    //printf("thread id=%d - abort=%d\n", args->tid, abort);
 
-    return NULL;
+    return (void *)abort;
+}
+
+struct timespec ts_diff(struct timespec *start, struct timespec *end) {
+    struct timespec ret = {.tv_nsec = 0, .tv_sec = 0};
+    ret.tv_sec = end->tv_sec - start->tv_sec;
+    if(end->tv_nsec - start->tv_nsec > 0) {
+        ret.tv_nsec = end->tv_nsec - start->tv_nsec;
+    } else {
+        ret.tv_sec--;
+        ret.tv_nsec = 1000000000 - (start->tv_nsec - end->tv_nsec);
+    }
+    return ret;
 }
