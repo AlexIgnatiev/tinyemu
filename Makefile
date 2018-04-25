@@ -28,7 +28,7 @@ else
 		CCFLAGS += -D ARM
 	endif
 
-	LINKS=-L/opt/intel/opencl-1.2-sdk-6.3.0.1914/lib64/ -Llib/env
+	LINKS=-L/opt/intel/opencl/ -Llib/env
 	INCLUDES=-I/opt/intel/opencl-sdk/include/ -Iinclude -Ilib/env/include
 endif
 
