@@ -29,9 +29,9 @@ else
 	endif
 
 	LINKS=-L"/opt/intel/opencl/SDK/lib64/"
-	INCLUDES=-I"/opt/intel/opencl/SDK/include/" -Iinclude
+	INCLUDES=-I/opt/intel/opencl/include/ -I"/opt/intel/opencl/SDK/include/" -Iinclude
 	LIBS += -lm -lrt
-	CCFLAGS += -Wno-format-security
+	CCFLAGS += -Wno-deprecated-declarations
 endif
 
 OBJ=env.o

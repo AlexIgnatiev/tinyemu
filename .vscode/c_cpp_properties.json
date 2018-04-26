@@ -26,21 +26,27 @@
         {
             "name": "Linux",
             "includePath": [
+                "/opt/intel/opencl/include/",
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/lib/env/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
+                    "/opt/intel/opencl/include/",
                     "/usr/include",
                     "/usr/local/include",
                     "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
-            }
+            },
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14"
         },
         {
             "name": "Win32",

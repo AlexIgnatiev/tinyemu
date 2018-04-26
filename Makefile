@@ -29,7 +29,7 @@ else
 	endif
 
 	LINKS=-L/opt/intel/opencl/ -Llib/env
-	INCLUDES=-I/opt/intel/opencl-sdk/include/ -Iinclude -Ilib/env/include
+	INCLUDES=-I/opt/intel/opencl/include/ -I/opt/intel/opencl-sdk/include/ -Iinclude -Ilib/env/include
 endif
 
 ROOT_DIR=src
