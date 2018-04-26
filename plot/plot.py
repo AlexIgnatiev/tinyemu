@@ -10,7 +10,7 @@ path = os.path.join(os.getcwd(), "..")
 executable = os.path.join(path, "program") if len(sys.argv) != 2 else sys.argv[1]
 
 def vary_dataset():
-    dataset_sizes = [2**x for x in range(10, 29)]  # 1KB to 256B
+    dataset_sizes = [2**x for x in range(10, 29)]  # 1KB to 256MB
     y_with_gpu = []
     y_without_gpu = []
     num_iters = 11
