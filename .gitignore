@@ -1,3 +1,7 @@
+plot/venv/
+program
+*.png
+
 # Prerequisites
 *.d
 

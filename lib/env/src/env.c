@@ -110,6 +110,7 @@ int env_init(env_t *env, int platform) {
     }
 
     env->allocated_queues = 0;
+    env->device_name = NULL;
 
 clean_exit:
     return ret;
@@ -119,6 +120,9 @@ void env_destroy(env_t * env) {
     clReleaseContext(env->context);
     for(int i = 0; i < env->allocated_queues; i++) {
         clReleaseCommandQueue(env->queues[i]);
+    }
+    if(env->device) {
+        free(env->device_name);
     }
 }
 
@@ -225,6 +229,16 @@ queue_id_t env_new_queue(env_t *env) {
     }
 
     return env->allocated_queues++;
+}
+
+char *get_device_name(env_t *env) {
+    if(!env->device_name) {
+        size_t size;
+        clGetDeviceInfo(env->device, CL_DEVICE_NAME, 0, NULL, &size);
+        env->device_name = (char *) malloc (sizeof(char) * size + 1);
+        clGetDeviceInfo(env->device, CL_DEVICE_NAME, sizeof(char) * size + 1, env->device_name, NULL);
+    }
+    return env->device_name;
 }
 
 int env_kernel_init(env_kernel_t *kernel, env_program_t *program, const char *kfn, size_t global_sz, size_t local_sz) {
@@ -343,7 +357,7 @@ void destroy_shared_buffer(shared_buf_t *buf) {
 void *map_shbuf(shared_buf_t *buf, queue_id_t q_id, cl_map_flags flags) {
     cl_int ret;
     cl_command_queue queue = get_queue(buf->env, q_id);
-    buf->mapped_ptr = clEnqueueMapBuffer(queue, buf->device_handler, CL_FALSE, flags, 0, buf->size, 0, NULL, NULL, &ret);
+    buf->mapped_ptr = clEnqueueMapBuffer(queue, buf->device_handler, CL_TRUE, flags, 0, buf->size, 0, NULL, NULL, &ret);
     buf->queued_on = queue;
     return buf->mapped_ptr;
 }

@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "env.h": "c"
-    }
+        "env.h": "c",
+        "cl.h": "c",
+        "unistd.h": "c"
+    },
+    "python.linting.enabled": false
 }

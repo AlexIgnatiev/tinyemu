@@ -31,6 +31,7 @@ typedef struct {
     cl_context context;
     cl_command_queue queues[MAX_QUEUES];
     unsigned char allocated_queues;
+    char *device_name;
 } env_t;
 
 typedef struct {
@@ -103,6 +104,8 @@ char *env_build_status(env_program_t *prog);
 queue_id_t env_new_queue(env_t *env);
 #define valid_queue_id(_q_id) (_q_id >= 0)
 #define env_flush_queue(_env, _q_id) (clFinish(_env->queues[_q_id]))
+
+char *get_device_name(env_t *env);
 
 int env_kernel_init(env_kernel_t *kernel, env_program_t *program, const char *kfn, size_t global_sz, size_t local_sz);
 void env_kernel_destroy(env_kernel_t *kernel);

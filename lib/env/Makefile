@@ -1,5 +1,5 @@
 LIBS=-lOpenCL
-CCFLAGS=-O0 -g -Wall -std=c11
+CCFLAGS=-O3 -g -Wall -std=c11
 CC=gcc
 DEFINES=-DENABLE_KERNEL_PROFILER
 
