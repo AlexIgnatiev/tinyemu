@@ -18,6 +18,8 @@ struct timespec ts_diff(struct timespec *start, struct timespec *end);
 void *tx_validate(void* _arg);
 void *tx_validate_host_only(void *_arg);
 
+pthread_mutex_t lock;
+
 typedef struct {
     shared_buf_t *glocks;
     int *ho_glocks;
@@ -34,7 +36,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "usage: exec host_only:int");
         exit(-1);
     }
-
+    pthread_mutex_init(&lock, NULL);
     int ret = 0;
     int host_only = atoi(argv[1]);
 
@@ -126,15 +128,20 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
 void *tx_validate(void* _args) {
     int reterr;
     tx_args_t *args = (tx_args_t *)_args;
+
+    pthread_mutex_lock(&lock);
     shared_buf_t *read_set = create_shared_buffer(args->readset_size, args->program->env, SH_BUF_READ);
     shared_buf_t *abort = create_shared_buffer(sizeof(int), args->program->env, SH_BUF_RW);
     queue_id_t q_id = env_new_queue(args->program->env);
+    pthread_mutex_unlock(&lock);
+
     if(!valid_queue_id(q_id)) {
         fprintf(stderr, "Invalid queue_id");
         return NULL;
     }
+    
     env_kernel_t validation_kernel;
-    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 512, 32);
+    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 1, 1);
     if(reterr) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }
@@ -147,7 +154,9 @@ void *tx_validate(void* _args) {
     reterr |= env_set_sb_karg(&validation_kernel, abort);
     reterr |= env_set_karg(&validation_kernel, sizeof(int), &(args->tid));
 
+    pthread_mutex_lock(&lock);
     reterr |= env_enqueue_kernel(&validation_kernel, q_id, 1);
+    pthread_mutex_unlock(&lock);
 
     if(reterr) {
         fprintf(stderr, "Transaction failed to set kernel args");
