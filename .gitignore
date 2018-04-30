@@ -1,6 +1,7 @@
 plot/venv/
 program
 *.png
+*.pyc
 
 # Prerequisites
 *.d

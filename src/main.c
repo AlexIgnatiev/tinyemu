@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #define get_num_cpus() sysconf(_SC_NPROCESSORS_ONLN)
-#define TXS_NUM 16
+#define TXS_NUM 1
 #define READ_SET_PORTION TXS_NUM
 
 #define pclock(_ts) printf("%ld.%04ld\n", _ts.tv_sec, _ts.tv_nsec / 1000000)
@@ -35,10 +35,10 @@ char *kernel_path = "src/kernels/main.cl";
 
 int main(int argc, char *argv[]) {
     if(argc < 3) {
-        fprintf(stderr, "usage: exec host_only:int dataset_size:int [kernel_file_path:str]\n");
+        fprintf(stderr, "usage: exec host_only:int dataset_size:int [kernel_file_path:str] [num_threads:int]\n");
         exit(-1);
     }
-    if(argc == 4) {
+    if(argc > 3) {
         kernel_path = argv[3];
     }
 
@@ -50,10 +50,10 @@ int main(int argc, char *argv[]) {
     struct timespec start, end;
     env_t env;
     env_program_t program;
-    unsigned int thread_num = TXS_NUM;  //in case it's necessary to make it not be compile-time constant
-    pthread_t threads[TXS_NUM];
+    unsigned int thread_num = argc == 5 ? atoi(argv[4]) : 1;
+    pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * thread_num);
     ret = env_init(&env, INTEL_PLATFORM);
-    size_t read_set_sz =  global_lock_tbl_size / READ_SET_PORTION;
+    size_t read_set_sz =  global_lock_tbl_size / thread_num;
 
     if(!host_only) {
         ret |= env_program_init(&program, &env, kernel_path, NULL);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
         unmap_shbuf(glocks);
 
         clock_gettime(CLOCK_MONOTONIC, &start);
-        tx_args_t tx_args[TXS_NUM];
+        tx_args_t *tx_args = (tx_args_t *) malloc(sizeof(tx_args_t) * thread_num);
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].glocks = glocks;
             tx_args[i].readset_size = read_set_sz;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
         glocks[read_set_sz / sizeof(int)] = 999999999;
         
         clock_gettime(CLOCK_MONOTONIC, &start);
-        tx_args_t tx_args[TXS_NUM];
+        tx_args_t *tx_args = (tx_args_t *) malloc(sizeof(tx_args_t) * thread_num);
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].ho_glocks = glocks;
             tx_args[i].readset_size = read_set_sz;
@@ -145,7 +145,7 @@ void *tx_validate(void* _args) {
     }
     
     env_kernel_t validation_kernel;
-    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 512, 32);
+    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 256, 32);
     if(reterr) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }
