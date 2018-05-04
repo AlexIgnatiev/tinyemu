@@ -221,8 +221,8 @@ void *tx_validate_host_only(void* _args) {
 
     free(read_set);
     //printf("thread id=%d - abort=%d\n", args->tid, abort);
-    return (void *)abort;
     end_clock = rdtsc();
+    return (void *)abort;
 }
 
 struct timespec ts_diff(struct timespec *start, struct timespec *end) {

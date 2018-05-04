@@ -61,6 +61,6 @@ def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
 
     plt.suptitle('{0} threads, using rdtsc'.format(num_threads), fontsize=14, fontweight='bold')
 
-    plt.savefig('plot_{0}threads_ratio_O0.png'.format(num_threads))
+    plt.savefig('plot_{0}threads_ratio_O0_time_all.png'.format(num_threads))
 
 vary_dataset_size()
