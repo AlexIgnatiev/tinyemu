@@ -130,10 +130,11 @@ int main(int argc, char *argv[]) {
         exec_time = ts_diff(&start, &end);
     }
 
-    //printf("a");
     env_destroy(&env);
-    //pclock(exec_time);
-    printf("%llu\n", end_clock - start_clock);
+
+    if(host_only)
+        //pclock(exec_time);
+        printf("%f\n", (double) (end_clock - start_clock) / 3500000000);
     return ret;
 }
 
@@ -168,7 +169,7 @@ void *tx_validate(void* _args) {
     }
     
     env_kernel_t validation_kernel;
-    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 256, 32);
+    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 1024,64);
     if(reterr) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }
@@ -193,6 +194,7 @@ void *tx_validate(void* _args) {
     env_flush_queue(args->program->env, q_id);
     pthread_mutex_unlock(&lock);
     end_clock = rdtsc();
+    print_kexec_time(validation_kernel);
     //printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
 
     return NULL;

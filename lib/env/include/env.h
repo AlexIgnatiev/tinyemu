@@ -83,7 +83,7 @@ typedef struct {
 #define get_time_to_start(_kernel) (_kernel.profile_info->started - _kernel.profile_info->queued)
 #define get_time_to_finish(_kernel) (_kernel.profile_info->finished - _kernel.profile_info->queued)
 #define get_error_margin(_kernel) (_kernel.profile_info->timer_resolution)
-#define print_kexec_time(_kernel) (printf("%.4f\n", (double)(_kernel.profile_info->finished - _kernel.profile_info->started) / NS_IN_SEC))
+#define print_kexec_time(_kernel) (printf("%f\n", ((double)_kernel.profile_info.finished - (double)_kernel.profile_info.started) / (double) NS_IN_SEC))
 #else
 #define get_time_to_submit(_kernel) -1
 #define get_time_to_start(_kernel) -1

@@ -13,7 +13,7 @@ matplotlib.use('Agg')
 
 path = os.path.join(os.getcwd(), "..")
 executable = os.path.join(path, "program") if len(sys.argv) != 2 else sys.argv[1]
-num_iters = 11
+num_iters = 1
 gpu_legend = mlines.Line2D([], [], color='green', marker='^', markersize=15, label='With GPU validation')
 cpu_legend = mlines.Line2D([], [], color='red', marker='o', markersize=15, label='CPU only validation')
 
@@ -39,8 +39,8 @@ def ratio():
                 try:
                     gpu_execs.append(float(subprocess.check_output(cmd)))
                     repeat = False
-                except:
-                    pass
+                except Exception as e:
+                    print e
             cmd[1] = "1"  # set flag to use cpu only
             cpu_execs.append(float(subprocess.check_output(cmd)))
 
@@ -97,8 +97,8 @@ def vary_dataset():
                 try:
                     gpu_execs.append(float(subprocess.check_output(cmd)))
                     repeat = False
-                except:
-                    pass
+                except Exception as e:
+                    print e
             cmd[1] = "1"  # set flag to use cpu only
             cpu_execs.append(float(subprocess.check_output(cmd)))
 
@@ -187,6 +187,6 @@ def cache_limits():
         plt.suptitle('dataset {0} cache size [{1}/{2}] (all levels full)'.format(arg['name'], arg['value'], cache_sz), fontsize=12, fontweight='bold')
         plt.savefig('plot_dataset_{0}_cache_all.png'.format(arg['name']))
 
-ratio()
-#vary_dataset()
+#ratio()
+vary_dataset()
 #cache_limits()

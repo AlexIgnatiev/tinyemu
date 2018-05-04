@@ -38,7 +38,7 @@
                 "/usr/include",
                 "${workspaceFolder}/lib/env/include"
             ],
-            "defines": [],
+            "defines": ["ENABLE_KERNEL_PROFILER"],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
