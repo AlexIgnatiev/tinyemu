@@ -52,8 +52,9 @@ def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
     ax.set_ylabel('time (s)')    
     plt.legend(handles=[gpu_legend, cpu_legend])
     
-    print sizes
-    print y_gpu
+    print("XX: {0}".format(sizes))
+    print("YY_GPU: {0}".format(y_gpu))
+    print("YY_CPU: {0}".format(y_cpu))
     plt.plot(sizes, y_gpu, '-.^g', markersize=7)
     plt.plot(sizes, y_cpu, '-.or', markersize=7)
 

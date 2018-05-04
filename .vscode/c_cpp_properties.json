@@ -36,9 +36,12 @@
                 "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
                 "/usr/include/x86_64-linux-gnu",
                 "/usr/include",
-                "${workspaceFolder}/lib/env/include"
+                "${workspaceFolder}/lib/env/include",
+                "${workspaceFolder}/include"
             ],
-            "defines": ["ENABLE_KERNEL_PROFILER"],
+            "defines": [
+                "ENABLE_KERNEL_PROFILER"
+            ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [

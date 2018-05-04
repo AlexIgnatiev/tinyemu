@@ -1,32 +1,13 @@
 #define _XOPEN_SOURCE 700 //for getting timestamps
 #include <env.h>
+#include <tinysim.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
-
+#include <emmintrin.h>
 #include <unistd.h>
-
-#define get_num_cpus() sysconf(_SC_NPROCESSORS_ONLN)
-#define TXS_NUM 1
-#define READ_SET_PORTION TXS_NUM
-
-#define pclock(_ts) printf("%ld.%09ld\n", _ts.tv_sec, _ts.tv_nsec / 1000000)
-
-#define rdtsc(void) ({ \
-    register unsigned long long res; \
-    __asm__ __volatile__ ( \
-        "xor %%rax,%%rax \n\t" \
-        "rdtsc           \n\t" \
-        "shl $32,%%rdx   \n\t" \
-        "or  %%rax,%%rdx \n\t" \
-        "mov %%rdx,%0" \
-        : "=r"(res) \
-        : \
-        : "rax", "rdx"); \
-    res; \
-})
 
 struct timespec ts_diff(struct timespec *start, struct timespec *end);
 void *tx_validate(void* _arg);
@@ -153,6 +134,14 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
     unmap_shbuf(buf);
 }
 
+void flush_cache(shared_buf_t *buf, queue_id_t q_id) {
+    int *read_set = (int *) map_shbuf(buf, q_id, CL_MAP_WRITE);
+    for(int i = 0; i < buf->size / sizeof(int); i++) {
+        _mm_clflush(read_set + i);
+    }
+    unmap_shbuf(buf);
+}
+
 void *tx_validate(void* _args) {
     start_clock = rdtsc();
     int reterr;
@@ -174,6 +163,7 @@ void *tx_validate(void* _args) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }
     populate_readset(read_set, q_id);
+    flush_cache(read_set, q_id);
     init_abort_flag(abort, q_id);
 
     reterr |= env_set_sb_karg(&validation_kernel, args->glocks);
@@ -208,6 +198,7 @@ void *tx_validate_host_only(void* _args) {
 
     for(int i = 0; i < args->readset_size / sizeof(int); i++) {
         read_set[i] = i;
+        _mm_clflush(read_set + i);
     }
 
     int offset = args->tid*args->readset_size / sizeof(int);
