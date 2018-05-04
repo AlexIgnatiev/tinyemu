@@ -9,6 +9,15 @@ import subprocess
 import csv
 from matplotlib.ticker import ScalarFormatter, NullFormatter, FuncFormatter
 
+import os
+from fabric.api import *
+
+HOST="elsa.inesc-id.pt"
+COMMAND="uname -a"
+
+env.user = "alexignatiev"
+env.password = os.getenv('SSH_PASSWORD', 'vagrant')
+
 matplotlib.use('Agg')
 
 path = os.path.join(os.getcwd(), "..")
@@ -76,7 +85,7 @@ def ratio():
         writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
         writer.writerows(rows)  
 
-
+@hosts(HOST)
 def vary_dataset():
     dataset_sizes = [2**x for x in range(8, 29)]  # 1KB to 256MB
     y_with_gpu = []
@@ -92,15 +101,17 @@ def vary_dataset():
         row = []
         for __ in range(num_iters):
             repeat = True
-            cmd = [executable, "0", str(i), os.path.join(path, "src", "kernels", "main.cl"), str(num_threads)]
+            cmd = ["cd opencl/tinysim && LD_LIBRARY_PATH=/opt/intel/opencl-sdk/lib64/", executable, "0", str(i), os.path.join(path, "src", "kernels", "main.cl"), str(num_threads)]
+            remote_cmd = " ".join(cmd)
             while repeat:
                 try:
-                    gpu_execs.append(float(subprocess.check_output(cmd)))
+                    gpu_execs.append(float(run(remote_cmd.stdout.split("\n")))[-1])
                     repeat = False
                 except Exception as e:
                     print e
             cmd[1] = "1"  # set flag to use cpu only
-            cpu_execs.append(float(subprocess.check_output(cmd)))
+            remote_cmd = " ".join(cmd)
+            cpu_execs.append(float(run(remote_cmd.stdout.split("\n")))[-1])
 
         gpu_execs.sort()
         cpu_execs.sort()
@@ -188,5 +199,5 @@ def cache_limits():
         plt.savefig('plot_dataset_{0}_cache_all.png'.format(arg['name']))
 
 #ratio()
-vary_dataset()
+#vary_dataset()
 #cache_limits()

@@ -132,9 +132,8 @@ int main(int argc, char *argv[]) {
 
     env_destroy(&env);
 
-    if(host_only)
         //pclock(exec_time);
-        printf("%f\n", (double) (end_clock - start_clock) / 3500000000);
+    printf("%f\n", (double) (end_clock - start_clock) / 3500000000);
     return ret;
 }
 
@@ -194,7 +193,7 @@ void *tx_validate(void* _args) {
     env_flush_queue(args->program->env, q_id);
     pthread_mutex_unlock(&lock);
     end_clock = rdtsc();
-    print_kexec_time(validation_kernel);
+    //print_kexec_time(validation_kernel);
     //printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
 
     return NULL;
