@@ -2,7 +2,7 @@ plot/venv/
 program
 *.png
 *.pyc
-
+*.csv
 # Prerequisites
 *.d
 

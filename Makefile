@@ -1,5 +1,5 @@
 LIBS= -lenv -lOpenCL -lpthread
-CCFLAGS=-O3 -g -Wall -std=c11
+CCFLAGS=-O0 -g -Wall -std=c11
 CC=gcc
 DEFINES=-DDEBUG -DENABLE_KERNEL_PROFILER
 

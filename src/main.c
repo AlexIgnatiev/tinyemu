@@ -12,7 +12,21 @@
 #define TXS_NUM 1
 #define READ_SET_PORTION TXS_NUM
 
-#define pclock(_ts) printf("%ld.%04ld\n", _ts.tv_sec, _ts.tv_nsec / 1000000)
+#define pclock(_ts) printf("%ld.%09ld\n", _ts.tv_sec, _ts.tv_nsec / 1000000)
+
+#define rdtsc(void) ({ \
+    register unsigned long long res; \
+    __asm__ __volatile__ ( \
+        "xor %%rax,%%rax \n\t" \
+        "rdtsc           \n\t" \
+        "shl $32,%%rdx   \n\t" \
+        "or  %%rax,%%rdx \n\t" \
+        "mov %%rdx,%0" \
+        : "=r"(res) \
+        : \
+        : "rax", "rdx"); \
+    res; \
+})
 
 struct timespec ts_diff(struct timespec *start, struct timespec *end);
 void *tx_validate(void* _arg);
@@ -30,6 +44,7 @@ typedef struct {
 } tx_args_t;
 
 struct timespec exec_time;
+unsigned long long start_clock, end_clock;
 
 char *kernel_path = "src/kernels/main.cl";
 
@@ -72,6 +87,8 @@ int main(int argc, char *argv[]) {
 
         clock_gettime(CLOCK_MONOTONIC, &start);
         tx_args_t *tx_args = (tx_args_t *) malloc(sizeof(tx_args_t) * thread_num);
+
+        //start_clock = rdtsc();
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].glocks = glocks;
             tx_args[i].readset_size = read_set_sz;
@@ -79,6 +96,7 @@ int main(int argc, char *argv[]) {
             tx_args[i].tid = i;
             pthread_create(threads + i, NULL, tx_validate, tx_args + i);
         }
+        //end_clock = rdtsc();
 
         for(int i = 0; i < thread_num; i++) {
             pthread_join(threads[i], NULL);
@@ -94,6 +112,8 @@ int main(int argc, char *argv[]) {
         
         clock_gettime(CLOCK_MONOTONIC, &start);
         tx_args_t *tx_args = (tx_args_t *) malloc(sizeof(tx_args_t) * thread_num);
+
+        //start_clock = rdtsc();
         for(int i = 0; i < thread_num; i++) {
             tx_args[i].ho_glocks = glocks;
             tx_args[i].readset_size = read_set_sz;
@@ -101,6 +121,7 @@ int main(int argc, char *argv[]) {
             tx_args[i].ho_glocks_size = global_lock_tbl_size;
             pthread_create(threads + i, NULL, tx_validate_host_only, tx_args + i);
         }
+        //end_clock = rdtsc();
 
         for(int i = 0; i < thread_num; i++) {
             pthread_join(threads[i], NULL);
@@ -111,7 +132,8 @@ int main(int argc, char *argv[]) {
 
     //printf("a");
     env_destroy(&env);
-    pclock(exec_time);
+    //pclock(exec_time);
+    printf("%llu\n", end_clock - start_clock);
     return ret;
 }
 
@@ -131,6 +153,7 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
 }
 
 void *tx_validate(void* _args) {
+    start_clock = rdtsc();
     int reterr;
     tx_args_t *args = (tx_args_t *)_args;
 
@@ -169,13 +192,14 @@ void *tx_validate(void* _args) {
 
     env_flush_queue(args->program->env, q_id);
     pthread_mutex_unlock(&lock);
-
+    end_clock = rdtsc();
     //printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
 
     return NULL;
 }
 
 void *tx_validate_host_only(void* _args) {
+    start_clock = rdtsc();
     tx_args_t *args = (tx_args_t *) _args;
     int abort = 0;
     int *read_set = (int *) malloc(args->readset_size);
@@ -194,7 +218,7 @@ void *tx_validate_host_only(void* _args) {
 
     free(read_set);
     //printf("thread id=%d - abort=%d\n", args->tid, abort);
-
+    end_clock = rdtsc();
     return (void *)abort;
 }
 
