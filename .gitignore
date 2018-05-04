@@ -11,6 +11,8 @@ program
 *.ko
 *.obj
 *.elf
+*gpu.txt
+*cpu.txt
 
 # Linker output
 *.ilk

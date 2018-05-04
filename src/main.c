@@ -133,7 +133,8 @@ int main(int argc, char *argv[]) {
     env_destroy(&env);
 
         //pclock(exec_time);
-    printf("%f\n", (double) (end_clock - start_clock) / 3500000000);
+    if(host_only)
+        printf("%f\n", (double) (end_clock - start_clock) / 3500000000);
     return ret;
 }
 
@@ -193,14 +194,13 @@ void *tx_validate(void* _args) {
     env_flush_queue(args->program->env, q_id);
     pthread_mutex_unlock(&lock);
     end_clock = rdtsc();
-    //print_kexec_time(validation_kernel);
+    print_kexec_time(validation_kernel);
     //printf("thread id=%d - abort=%d\n", args->tid, ((int *) abort->host_handler)[0]);
 
     return NULL;
 }
 
 void *tx_validate_host_only(void* _args) {
-    start_clock = rdtsc();
     tx_args_t *args = (tx_args_t *) _args;
     int abort = 0;
     int *read_set = (int *) malloc(args->readset_size);
@@ -210,16 +210,18 @@ void *tx_validate_host_only(void* _args) {
     }
 
     int offset = args->tid*args->readset_size / sizeof(int);
+
+    start_clock = rdtsc();
     for(int i = 0; i < args->readset_size / sizeof(int); i++) {
         if(read_set[i] < args->ho_glocks[i + offset]) {
             abort = 1;
             break;
         }
     }
+    end_clock = rdtsc();
 
     free(read_set);
     //printf("thread id=%d - abort=%d\n", args->tid, abort);
-    end_clock = rdtsc();
     return (void *)abort;
 }
 
