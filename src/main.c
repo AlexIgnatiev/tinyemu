@@ -169,7 +169,7 @@ void *tx_validate(void* _args) {
     }
     
     env_kernel_t validation_kernel;
-    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 1024,64);
+    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 512, 32);
     if(reterr) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }

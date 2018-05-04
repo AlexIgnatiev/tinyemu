@@ -9,10 +9,11 @@ __kernel void validate(__global int *global_lock, size_t global_lock_sz, __globa
     //int i = 0, j = thread_num * i + id;
     //printf("%d\n", start_position);
     for(int j = local_rs_size * id; j < local_rs_size * (id + 1); j++) {
-        if (readset[j] < global_lock[j + start_position]) {
+        int k = id + j*local_rs_size;
+        if (readset[k] < global_lock[k + start_position]) {
             *abort = 1;
             return;
         }
-        if (j > rs_size / sizeof(int)) return; 
+        if (k > rs_size / sizeof(int)) return; 
     } 
 }
