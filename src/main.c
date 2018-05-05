@@ -131,13 +131,16 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
 
 void flush_cache(shared_buf_t *buf, queue_id_t q_id) {
     int *read_set = (int *) map_shbuf(buf, q_id, CL_MAP_WRITE);
-    for(int i = 0; i < buf->size / sizeof(int); i++) {
-        _mm_clflush(read_set + i);
+    for(int i = 0; i < buf->size / sizeof(int); i+=64) {
+        if((rand() % 101) <= options.flush_probability) {
+            _mm_clflush(read_set + i);
+        }
     }
     unmap_shbuf(buf);
 }
 
 void *tx_validate(void* _args) {
+    srand(time(NULL));
     start_clock = rdtsc();
     int reterr;
     tx_args_t *args = (tx_args_t *)_args;
@@ -186,6 +189,7 @@ void *tx_validate(void* _args) {
 }
 
 void *tx_validate_host_only(void* _args) {
+    srand(time(NULL));
     start_clock = rdtsc();
     tx_args_t *args = (tx_args_t *) _args;
     int abort = 0;
@@ -193,7 +197,8 @@ void *tx_validate_host_only(void* _args) {
 
     for(int i = 0; i < args->readset_size / sizeof(int); i++) {
         read_set[i] = i;
-        _mm_clflush(read_set + i);
+        if(!(i % 64) && (rand() % 101) <= options.flush_probability)
+            _mm_clflush(read_set + i);
     }
 
     int offset = args->tid*args->readset_size / sizeof(int);
