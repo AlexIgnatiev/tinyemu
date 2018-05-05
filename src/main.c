@@ -14,6 +14,7 @@ void *tx_validate(void* _arg);
 void *tx_validate_host_only(void *_arg);
 
 pthread_mutex_t lock;
+options_t options;
 
 typedef struct {
     shared_buf_t *glocks;
@@ -30,23 +31,17 @@ unsigned long long start_clock, end_clock;
 char *kernel_path = "src/kernels/main.cl";
 
 int main(int argc, char *argv[]) {
-    if(argc < 3) {
-        fprintf(stderr, "usage: exec host_only:int dataset_size:int [kernel_file_path:str] [num_threads:int]\n");
-        exit(-1);
-    }
-    if(argc > 3) {
-        kernel_path = argv[3];
-    }
+    options = parse_opts(argc, argv);
 
     pthread_mutex_init(&lock, NULL);
     int ret = 0;
-    int host_only = atoi(argv[1]);
-    int global_lock_tbl_size = atoi(argv[2]);
+    int host_only = options.host_only;
+    int global_lock_tbl_size = options.dataset_size * options.thread_num;
 
     struct timespec start, end;
     env_t env;
     env_program_t program;
-    unsigned int thread_num = argc == 5 ? atoi(argv[4]) : 1;
+    unsigned int thread_num = options.thread_num;
     pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * thread_num);
     ret = env_init(&env, INTEL_PLATFORM);
     size_t read_set_sz =  global_lock_tbl_size / thread_num;

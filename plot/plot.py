@@ -16,8 +16,7 @@ num_threads = 1
 def formatter(x, pos=None):
     return str(x) if x < 1 else str(int(x))
 
-
-def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
+def parse_files(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
     sizes = []
     y_cpu = []
     y_gpu = []
@@ -40,6 +39,10 @@ def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
                 floats.append(float(f))
             floats.sort()
             y_gpu.append(floats[gpu_reader.line_num // 2])
+    return sizes, y_gpu, y_cpu
+
+def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
+    sizes, y_gpu, y_cpu = parse_files(gpu_input_f, cpu_input_f)
     
     ax = plt.gca()
     ax.set_xscale('log', basex=2)
@@ -48,7 +51,7 @@ def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
 
     # Set x logaritmic
     plt.xticks(sizes)
-    ax.set_xlabel('Dataset Size (MB)')
+    ax.set_xlabel('Dataset Size')
     ax.set_ylabel('time (s)')    
     plt.legend(handles=[gpu_legend, cpu_legend])
     
@@ -62,6 +65,26 @@ def vary_dataset_size(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
 
     plt.suptitle('{0} threads, using rdtsc'.format(num_threads), fontsize=14, fontweight='bold')
 
-    plt.savefig('plot_{0}threads_ratio_O0_time_all.png'.format(num_threads))
+    plt.savefig('plot_{0}threads_O0_flush_cache.png'.format(num_threads))
 
-vary_dataset_size()
+
+def ratio(gpu_input_f="gpu.txt", cpu_input_f="cpu.txt"):
+    sizes, y_gpu, y_cpu = parse_files(gpu_input_f, cpu_input_f)
+    ys = [y/x for x,y in zip(y_gpu, y_cpu)]
+
+    ax = plt.gca()
+    ax.set_xscale('log', basex=2)
+    ax.get_xaxis().set_major_formatter(FuncFormatter(formatter))
+    plt.xticks(sizes)
+    ax.set_xlabel('Dataset Size')
+    ax.set_ylabel('gpu time/cpu time')
+
+    print("XX: {0}".format(sizes))
+    print("YY_RATIO: {0}".format(ys))
+    plt.plot(sizes, ys, 'c.--')
+    plt.grid(linestyle="dotted")
+    plt.suptitle('{0} threads, using rdtsc'.format(num_threads), fontsize=14, fontweight='bold')
+    plt.savefig('plot_{0}threads_ratio_O0_flush_cache1.png'.format(num_threads))   
+
+#vary_dataset_size()
+ratio()
