@@ -131,7 +131,7 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
 
 void flush_cache(shared_buf_t *buf, queue_id_t q_id) {
     int *read_set = (int *) map_shbuf(buf, q_id, CL_MAP_WRITE);
-    for(int i = 0; i < buf->size / sizeof(int); i+=64) {
+    for(int i = 0; i < buf->size; i+=64) {
         if((rand() % 101) <= options.flush_probability) {
             _mm_clflush(read_set + i);
         }
@@ -197,7 +197,7 @@ void *tx_validate_host_only(void* _args) {
 
     for(int i = 0; i < args->readset_size / sizeof(int); i++) {
         read_set[i] = i;
-        if(!(i % 64) && (rand() % 101) <= options.flush_probability)
+        if(!(i % 16) && (rand() % 101) <= options.flush_probability)
             _mm_clflush(read_set + i);
     }
 

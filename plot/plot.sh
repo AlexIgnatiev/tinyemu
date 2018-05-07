@@ -5,7 +5,7 @@ git stash
 git pull origin elsa
 make clean
 make
-PROB=50
+PROB=100
 GPU_FILENAME=gpu_p$PROB.txt
 CPU_FILENAME=cpu_p$PROB.txt
 
@@ -15,13 +15,13 @@ echo -n "" > $CPU_FILENAME
 echo -n "" > $GPU_FILENAME
 for SIZE in ${sizes[@]}
 do
-    echo -n $SIZE"," >> CPU_FILENAME
-    echo -n $SIZE"," >> GPU_FILENAME
+    echo -n $SIZE"," >> $CPU_FILENAME
+    echo -n $SIZE"," >> $GPU_FILENAME
 	for ((IT=0; IT<$iters; IT++))
     do
-        echo -n $(LD_LIBRARY_PATH=/opt/intel/opencl-sdk/lib64/ ./program -s $SIZE -d cpu -p $PROB)";" >> CPU_FILENAME
-        echo -n $(LD_LIBRARY_PATH=/opt/intel/opencl-sdk/lib64/ ./program -s $SIZE -d gpu -p $PROB)";" >> GPU_FILENAME
+        echo -n $(LD_LIBRARY_PATH=/opt/intel/opencl-sdk/lib64/ ./program -s $SIZE -d cpu -p $PROB)";" >> $CPU_FILENAME
+        echo -n $(LD_LIBRARY_PATH=/opt/intel/opencl-sdk/lib64/ ./program -s $SIZE -d gpu -p $PROB)";" >> $GPU_FILENAME
     done
-    echo "" >> CPU_FILENAME
-    echo "" >> GPU_FILENAME
+    echo "" >> $CPU_FILENAME
+    echo "" >> $GPU_FILENAME
 done
