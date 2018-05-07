@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/program",
-            "args": ["-s 1234 -d gpu -p 100"],
+            "args": ["-s 134217728 -d gpu -p 100"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
