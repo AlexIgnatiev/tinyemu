@@ -131,12 +131,13 @@ void init_abort_flag(shared_buf_t *buf, queue_id_t q_id) {
 
 void flush_cache(shared_buf_t *buf, queue_id_t q_id) {
     int *read_set = (int *) map_shbuf(buf, q_id, CL_MAP_WRITE);
-    for(int i = 0; i < buf->size / sizeof(int); i++) {
+    for(int i = 0; i < buf->size / sizeof(int); i+= 64 / sizeof(int)) {
         if((rand() % 101) <= options.flush_probability) {
             _mm_clflush(read_set + i);
         }
     }
     unmap_shbuf(buf);
+    __sync_synchronize();
 }
 
 void *tx_validate(void* _args) {
@@ -197,9 +198,10 @@ void *tx_validate_host_only(void* _args) {
 
     for(int i = 0; i < args->readset_size / sizeof(int); i++) {
         read_set[i] = i;
-        if((rand() % 101) <= options.flush_probability)
+        if(!(i % (64 / sizeof(int))) && (rand() % 101) <= options.flush_probability)
             _mm_clflush(read_set + i);
     }
+    __sync_synchronize();
 
     int offset = args->tid*args->readset_size / sizeof(int);
 
