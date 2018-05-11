@@ -243,6 +243,7 @@ char *get_device_name(env_t *env) {
 
 int env_kernel_init(env_kernel_t *kernel, env_program_t *program, const char *kfn, size_t global_sz, size_t local_sz) {
     if(program->built) {
+        local_sz = local_sz > 0 ? local_sz : default_workgroup_size(kernel);
         cl_kernel cl_kern;
         cl_int cl_reterr;
         cl_kern = clCreateKernel(program->program, kfn, &cl_reterr);
@@ -263,6 +264,18 @@ int env_kernel_init(env_kernel_t *kernel, env_program_t *program, const char *kf
     } else {
         return -ERROR_INVALID_PROGRAM;
     }
+}
+
+size_t default_workgroup_size(env_kernel_t *kernel) {
+    size_t ret = 0;
+    cl_int clret = clGetKernelWorkGroupInfo(
+        kernel->kernel,
+        kernel->program->env->device,
+        CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+        sizeof(size_t),
+        &ret,
+        NULL);
+    return ret;
 }
 
 void env_kernel_destroy(env_kernel_t *kernel) {

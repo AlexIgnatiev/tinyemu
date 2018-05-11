@@ -107,6 +107,8 @@ queue_id_t env_new_queue(env_t *env);
 
 char *get_device_name(env_t *env);
 
+size_t default_workgroup_size(env_kernel_t *kernel);
+
 int env_kernel_init(env_kernel_t *kernel, env_program_t *program, const char *kfn, size_t global_sz, size_t local_sz);
 void env_kernel_destroy(env_kernel_t *kernel);
 int _env_set_karg(env_kernel_t *kernel, unsigned int index, size_t arg_sz, const void *val);

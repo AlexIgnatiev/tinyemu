@@ -157,14 +157,13 @@ void *tx_validate(void* _args) {
     }
     
     env_kernel_t validation_kernel;
-    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 512, 32);
+    reterr = env_kernel_init(&validation_kernel, args->program, "validate", 512, 0);
     if(reterr) {
         fprintf(stderr, "Transaction failed to init the kernel");
     }
     populate_readset(read_set, q_id);
     flush_cache(read_set, q_id);
     init_abort_flag(abort, q_id);
-
     reterr |= env_set_sb_karg(&validation_kernel, args->glocks);
     reterr |= env_set_karg(&validation_kernel, sizeof(size_t), &(args->glocks->size));
     reterr |= env_set_sb_karg(&validation_kernel, read_set);
